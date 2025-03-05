@@ -1,0 +1,206 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    font-family: 'Inter', sans-serif;
+    background: url(../login_background.png) no-repeat center center fixed;
+    background-size: cover;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-container {
+    position: absolute;
+    width: 100%;
+    top: 10px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.logo-container img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+/* LOGIN MODAL */
+.login-modal {
+    background-color: var(--white);
+    width: 400px;
+    height: 400px;
+    display: flex;
+    flex-direction: center;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    display: flex;
+}
+
+.login-box {
+    width: 350px;
+    padding: 20px;
+    text-align: center;
+    color: var(--dark-grey);
+}
+
+.login-box h2 {
+    font-family: 'Inter', sans-serif;
+}
+
+.login-form {
+    margin-top: 20px;
+    gap: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0;
+    border: 1px solid var(--shadow);
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+}
+
+/* RESET PASS MODAL */
+.forgot-password-modal {
+    background-color: var(--white);
+    width: 500px;
+    height: 350px;
+    display: flex;
+    flex-direction: center;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    display: none;
+}
+
+.forgot-password-box {
+    width: 450px;
+    padding: 20px;
+    text-align: center;
+    color: var(--dark-grey);
+}
+
+.forgot-password-box h2 {
+    font-family: 'Inter', sans-serif;
+}
+
+.forgot-password-form {
+    margin-top: 20px;
+    gap: 15px;
+}
+
+/* REGISTER MODAL */
+.register-modal {
+    background-color: var(--white);
+    width: 500px;
+    height: 750px;
+    display: flex;
+    flex-direction: center;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    display: none;
+}
+
+.register-box {
+    width: 450px;
+    padding: 20px;
+    text-align: center;
+    color: var(--dark-grey);
+}
+
+.register-box h2 {
+    font-family: 'Inter', sans-serif;
+}
+
+.register-form {
+    margin-top: 20px;
+    gap: 15px;
+}
+
+select {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0;
+    border: 1px solid var(--shadow);
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    color: var(--dark-grey);
+}
+
+/* COMMON ELEMENTS USED BY MODAL */
+input {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0;
+    border: 1px solid var(--shadow);
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+}
+
+.error-message {
+    color: #d1161d;
+    font-size: 14px;
+    font-style: italic;
+}
+
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    background-color: var(--yellow);
+    color: var(--black);
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: bolder;
+    transition: ease-in 0.3s;
+    font-family: 'Inter', sans-serif;
+}
+
+button:hover {
+    background-color: var(--orange);
+    color: var(--white);
+}
+
+.login-options {
+    display: flex;
+    margin-top: 40px;
+    justify-content: center;
+    gap: 10px;
+}
+
+.login-options a {
+    text-decoration: none;
+    color: var(--light-grey);
+    font-weight: 300;
+    cursor: pointer;
+    transition: ease-in 0.3s;
+}
+
+.login-options a:hover {
+    color: var(--dark-grey);
+}

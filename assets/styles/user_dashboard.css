@@ -1,0 +1,128 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    font-family: 'Inter', sans-serif;
+}
+
+.main-content{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100vh;
+    background-color: var(--dirty-white);
+    padding: 20px 30px;
+    color: var(--dark-grey);
+    overflow-y: auto;
+}
+
+/* USER PROFILE DISPLAY */
+.user-card {
+    display: flex;
+    background-color: var(--white);
+    padding: 15px 40px;
+    border: 1px solid var(--shadow);
+    border-radius: 10px;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.user-profile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.user-profile h1,
+.user-profile h2,
+.user-profile span {
+    font-size: 50px;
+}
+
+.user-profile p {
+    color: var(--light-grey);
+    font-style: italic;
+}
+
+.user-card span {
+    background: linear-gradient(to right, var(--yellow), var(--orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.profile-img {
+    width: 175px;
+    height: 175px;
+    border: 10px solid var(--orange);
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* CARDS AND CALENDAR */
+.utilities{
+    display: flex; 
+    flex-direction: row;
+    gap: 20px;
+}
+
+/* CARDS */
+.task-info {
+    flex-grow: 1;
+}
+
+.stats-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card {
+    flex-grow: 1;
+    background-color: var(--white);
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid var(--shadow);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.card h3 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+}
+
+.card h1 {
+    color: var(--yellow);
+    font-size: 60px;
+}
+
+.card i {
+    position: absolute;
+    bottom: -20px;   
+    right: 0px;
+    font-size: 100px;
+    color: #fdd835;
+    opacity: 0.3;
+}
+
+/* CALENDAR */
+.calendar-section {
+    background-color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    border-radius: 10px;
+    border: 1px solid var(--shadow);
+}
+
+.calendar-section iframe{
+    width: 80%;
+    height: 80%;
+}

@@ -13,7 +13,7 @@ $search_filter = isset($_GET['search']) ? $_GET['search'] : '';
 $sql = "SELECT t.id, t.taskname, t.status, t.assignedto, t.starttime, t.duetime, t.proof, t.attachment, u.fullname AS assigned_to 
         FROM tasks t
         LEFT JOIN users u ON t.assignedto = u.id
-        WHERE 1=1";
+        WHERE t.status !='Archived'";
 
 // Add condition to filter tasks based on department if the user is a supervisor
 if ($position === 'Supervisor') {
@@ -42,7 +42,7 @@ $sql .= " LIMIT $itemsPerPage OFFSET $offset";
 $result = $conn->query($sql);
 
 // Fetch total number of tasks for pagination
-$totalTasksSql = "SELECT COUNT(*) AS total FROM tasks t LEFT JOIN users u ON t.assignedto = u.id WHERE 1=1";
+$totalTasksSql = "SELECT COUNT(*) AS total FROM tasks t LEFT JOIN users u ON t.assignedto = u.id WHERE t.status !='Archived'";
 if ($position === 'Supervisor') {
     $totalTasksSql .= " AND u.department = '$department'";
 }

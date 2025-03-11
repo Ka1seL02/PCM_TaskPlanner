@@ -24,7 +24,8 @@ if (isset($_POST['task_id'])) {
             "assigned_to" => $task['assigned_user'],
             "status" => $task['status'],
             "attachment" => $task['attachment'],
-            "proof" => $task['proof']
+            "proof" => $task['proof'],
+            "comments" => $task['comments']
         ]);
     } else {
         echo json_encode(["error" => "Task not found"]);

@@ -267,3 +267,34 @@ button[type="submit"] {
 button[type="submit"]:hover {
     background-color: var(--orange);
 }
+
+/* PAGE CONTROLER FOR TABLE */
+.pagination {
+    display: flex;
+    justify-content: center;
+}
+
+.pagination a {
+    text-decoration: none;
+    text-align: center;
+    padding: 5px 10px;
+    margin: 2px;
+    border: 1px solid var(--shadow);
+    border-radius: 5px;
+    color: var(--black);
+    display: inline-block;
+    background-color: var(--white);
+    width: 35px;
+}
+
+.pagination a.active {
+    background-color: var(--orange);
+    color: var(--white);
+    font-weight: bold;
+    border: none;
+}
+
+.pagination span {
+    padding: 8px 12px;
+    font-weight: bold;
+}

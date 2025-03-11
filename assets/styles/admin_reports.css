@@ -217,49 +217,70 @@ tr td:last-child {
     color: var(--light-grey);
 }
 
-/* STANDARD MODAL CONTAINER */
-.modal-container {
-    background: var(--white);
-    padding: 30px;
-    border-radius: 8px;
-    width: 400px;
-    position: relative;
+/* ASSIGN TASK */
+#assignTaskModal {
+    display: none;
+    font-family: 'Inter', sans-serif;
 }
 
-.modal-container h2 {
-    margin-bottom: 30px;
-    color: var(--dark-grey);
-}
-
-/* TASK FORM AND EDIT TASK FORM */
-form {
+#assignTaskModal .modal-container {
     display: flex;
+    flex-direction: column;
+    background-color: var(--white);
+    border-radius: 20px;
+    padding: 50px;
+}
+
+#assignTaskModal .main {
+    display: flex;
+    flex-direction: row;
+    gap: 100px;
+}
+
+#assignTaskModal .left-container,
+#assignTaskModal .right-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#assignTaskModal input[type="text"],
+#assignTaskModal input[type="datetime-local"],
+#assignTaskModal input[type="file"],
+#assignTaskModal textarea {
+    width: 350px;
+}
+
+#customDateTimeContainer {
+    display: none;
+    flex-direction: column;
+}
+
+.radio-buttons {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+#customDateTimeContainer {
+    margin-left: 10px;
+}
+
+/* VIEW TASK MODAL */
+#detailsModal {
+    display: none;
     flex-direction: column;
     font-family: 'Inter', sans-serif;
 }
 
-form label {
-    font-size: 16px;
-    margin-bottom: 5px;
+#detailsModal .modal-container {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--white);
+    border-radius: 20px;
+    padding: 50px;
+    max-width: 750px;
 }
 
-form input,
-form select,
-form textarea {
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid var(--shadow);
-    border-radius: 5px;
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-}
-
-form textarea{
-    resize: none;
-    height: 150px;
-}
-
-/* VIEW TASK MODAL */
 .task-info{
     display: flex;
     flex-direction: column;
@@ -313,6 +334,33 @@ form textarea{
 .pagination span {
     padding: 8px 12px;
     font-weight: bold;
+}
+
+/* FORM INPUTS */
+.modal-container h2 {
+    margin-bottom: 30px;
+    color: var(--dark-grey);
+}
+
+form label {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+form input,
+form select,
+form textarea {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--shadow);
+    border-radius: 5px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+}
+
+form textarea{
+    resize: none;
+    height: 150px;
 }
 
 /* BUTTON USED IN MODALS */

@@ -100,10 +100,13 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                         case 'pending':
                                             echo '<span class="orange-text text">Pending</span>';
                                             break;
-                                        case 'missed':
+                                        case 'missing':
+                                        case 'late':
                                             echo '<span class="red-text text">Missed</span>';
                                             break;
                                         case 'in-progress':
+                                        case 'revision':
+                                        case 'revised':
                                             echo '<span class="blue-text text">In-Progress</span>';
                                             break;
                                         default:
@@ -126,6 +129,16 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                             <i class="fa fa-pencil"></i>
                                         </button>
                                     <?php endif; ?>
+                                    <?php if (strtolower($task['status']) !== 'completed'): ?>
+                                        <button class="action-btn addCommentBtn" data-id="<?= $task['id'] ?>">
+                                            <i class="fa fa-comment"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if (strtolower($task['status']) === 'completed'): ?>
+                                        <button class="action-btn archiveTaskBtn" data-id="<?= $task['id'] ?>">
+                                            <i class="fa fa-folder-open"></i>
+                                        </button>
+                                    <?php endif; ?>
                                     <button class="action-btn deleteTaskBtn" data-id="<?= $task['id'] ?>">
                                         <i class="fa fa-trash"></i>
                                     </button>
@@ -144,48 +157,69 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
             <?php endif; ?>
         </div>
         <!-- PAGENATION -->
-        <div class="pagination">
-            <?php if ($totalPages > 1): ?>
-                <div class="pagination">
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <a href="?page=<?= $i ?>&status=<?= $status_filter ?>&search=<?= $search_filter ?>"
-                            class="<?= ($i == $currentPage) ? 'active' : '' ?>">
-                            <?= $i ?>
-                        </a>
-                    <?php endfor; ?>
-                </div>
-            <?php endif; ?>
-        </div>
+        <?php if ($totalTasks > $itemsPerPage): ?>
+            <div class="pagination">
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <a href="?page=<?= $i ?>&status=<?= $status_filter ?>&search=<?= $search_filter ?>"
+                        class="<?= ($i == $currentPage) ? 'active' : '' ?>">
+                        <?= $i ?>
+                    </a>
+                <?php endfor; ?>
+            </div>
+        <?php endif; ?>
         <!-- ASSIGN TASK MODAL -->
         <div id="assignTaskModal" class="modal-overlay">
             <div class="modal-container">
                 <h2>Create New Task</h2>
                 <form id="taskForm" enctype="multipart/form-data">
-                    <label for="taskName">Task Name</label>
-                    <input type="text" id="taskName" name="taskName" required>
-                    <label for="taskDescription">Task Description</label>
-                    <textarea id="taskDescription" name="taskDescription" required></textarea>
-                    <label for="assignTo">Assign To</label>
-                    <select id="assignto" name="assignTo" required>
-                        <option value="">Select Intern</option>
-                        <?php
-                        include 'db/db_connection.php';
-                        $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern'";
-                        $internResult = $conn->query($internQuery);
-                        if ($internResult && $internResult->num_rows > 0) {
-                            while ($intern = $internResult->fetch_assoc()) {
-                                echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
-                    <label for="startTime">Start Time</label>
-                    <input type="datetime-local" id="startTime" name="startTime" required>
-                    <label for="dueTime">End Time</label>
-                    <input type="datetime-local" id="dueTime" name="dueTime" required>
-                    <label for="attachment">Attachment</label>
-                    <input type="file" id="attachment" name="attachment"
-                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                    <div class="main">
+                        <div class="left-container">
+                            <label for="taskName">Task Name</label>
+                            <input type="text" id="taskName" name="taskName" required>
+                            <label for="taskDescription">Task Description</label>
+                            <textarea id="taskDescription" name="taskDescription" required></textarea>
+                            <label for="assignTo">Assign To</label>
+                            <select id="assignTo" name="assignTo" required>
+                                <option>Select Intern</option>
+                                <?php
+                                include 'db/db_connection.php';
+                                $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern' ORDER BY fullname ASC";
+                                $internResult = $conn->query($internQuery);
+                                if ($internResult && $internResult->num_rows > 0) {
+                                    while ($intern = $internResult->fetch_assoc()) {
+                                        echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="right-container">
+                            <label for="dueTime">Due</label>
+                            <div class="radio-buttons">
+                                <div>
+                                    <input type="radio" id="nextDay" name="dueTimeOption" value="nextDay" required>
+                                    <label for="nextDay">Next Day</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="nextWeek" name="dueTimeOption" value="nextWeek">
+                                    <label for="nextWeek">Next Week</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="custom" name="dueTimeOption" value="custom">
+                                    <label for="custom">Custom</label>
+                                </div>
+                            </div>
+                            <div id="customDateTimeContainer">
+                                <label for="customDueTime">Custom Due Time</label>
+                                <input type="datetime-local" id="customDueTime" name="customDueTime">
+                            </div>
+                            <label for="editAttachment">Attachment</label>
+                            <input type="file" id="editAttachment" name="attachment"
+                                accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                            <label for="taskComment">Comment</label>
+                            <textarea id="taskComment" name="taskComment"></textarea>
+                        </div>
+                    </div>
                     <div class="modal-buttons">
                         <button type="submit" id="assignBtn" class="assign-btn">Assign</button>
                         <button onclick="closeModalDetails('assignTaskModal')">Cancel</button>
@@ -206,6 +240,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     <p><strong>Status:</strong> <span id="taskStatus"></span></p>
                     <p><strong>Task Image / File:</strong> <span id="taskFile"></span></p>
                     <p><strong>Proof Image / File:</strong> <span id="proofFile"></span></p>
+                    <p><strong>Comment:</strong> <span id="taskComments"></span></p>
                 </div>
                 <div class="modal-buttons">
                     <button onclick="closeModalDetails('detailsModal')">Close</button>
@@ -286,14 +321,29 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     window.location.href = currentUrl.toString();
                 });
             }
-            // ASSIGN TASK BUTTON CLICKED
+            // SHOW ASSIGN TASK MODAL
             document.getElementById('assignTaskBtn').addEventListener('click', function () {
                 document.getElementById('assignTaskModal').style.display = 'flex';
             });
-            // FORM SUBMISSION TO ASSIGN TASK
+            // ASSIGN TASK
             document.getElementById('taskForm').addEventListener('submit', function (event) {
                 event.preventDefault();
                 const formData = new FormData(this);
+                // Calculate due time based on selected option
+                const dueTimeOption = document.querySelector('input[name="dueTimeOption"]:checked').value;
+                let dueTime;
+                const now = new Date();
+
+                if (dueTimeOption === 'nextDay') {
+                    const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 10, 0, 0); // Next day at 10 AM
+                    dueTime = `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(2, '0')}-${String(nextDay.getDate()).padStart(2, '0')}T10:00`;
+                } else if (dueTimeOption === 'nextWeek') {
+                    const nextWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (8 - now.getDay()), 10, 0, 0); // Next Monday at 10 AM
+                    dueTime = `${nextWeek.getFullYear()}-${String(nextWeek.getMonth() + 1).padStart(2, '0')}-${String(nextWeek.getDate()).padStart(2, '0')}T10:00`;
+                } else if (dueTimeOption === 'custom') {
+                    dueTime = document.getElementById('customDueTime').value;
+                }
+                formData.append('dueTime', dueTime);
                 fetch('db/db_assign-task.php', {
                     method: 'POST',
                     body: formData
@@ -383,6 +433,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                     } else {
                                         proofFileElement.innerHTML = '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>';
                                     }
+                                    console.log('Comments:', data.comments); // Log the comments for debugging
+                                    document.getElementById('taskComments').textContent = data.comments ? data.comments : 'None';
                                     document.getElementById('detailsModal').style.display = 'flex';
                                 }
                             } catch (error) {
@@ -524,6 +576,68 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                 .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
                         }
                     });
+                });
+            });
+            // ARCHIVE TASK
+            document.querySelectorAll('.archiveTaskBtn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const taskId = this.getAttribute('data-id');
+                    const buttonElement = this;
+
+                    Swal.fire({
+                        title: 'Save Task Record?',
+                        text: 'Do you want to save this task entry?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes',
+                        cancelButtonText: 'No'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('db/db_archive-task.php', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                },
+                                body: 'task_id=' + taskId
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire({
+                                            title: 'Task Saved',
+                                            text: 'The task has been saved',
+                                            icon: 'success'
+                                        }).then(() => {
+                                            buttonElement.closest('tr').remove();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Error',
+                                            text: 'An error occurred while saving the task.',
+                                            icon: 'error'
+                                        });
+                                    }
+                                })
+                                .catch(error => console.error('Error:', error));
+                        }
+                    })
+                });
+            });
+            // RADIO BUTTON CHANGE
+            document.querySelectorAll('input[name="dueTimeOption"]').forEach(radio => {
+                radio.addEventListener('change', function () {
+                    const customDateTimeContainer = document.getElementById('customDateTimeContainer');
+                    if (this.value === 'custom') {
+                        customDateTimeContainer.style.display = 'flex';
+                    } else {
+                        customDateTimeContainer.style.display = 'none';
+                    }
+                });
+            });
+            // ADD COMMENT
+            document.querySelectorAll('.addCommentBtn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const taskId = this.getAttribute('data-id');
                 });
             });
         });

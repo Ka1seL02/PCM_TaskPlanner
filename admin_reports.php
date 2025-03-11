@@ -284,6 +284,21 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 </form>
             </div>
         </div>
+        <!-- ADD COMMENT MODAL -->
+         <div id="addCommentModal" class="modal-overlay">
+            <div class="modal-container">
+                <h2>Add Comment</h2>
+                <form id="addCommentForm">
+                    <input type="hidden" id="commentTaskId" name="taskId">
+                    <label for="commentText">Comment</label>
+                    <textarea id="commentText" name="commentText" required></textarea>
+                    <div class="modal-buttons">
+                        <button type="submit" class="assign-btn">Submit Comment</button>
+                        <button type="button" onclick="closeModalDetails('addCommentModal')">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <!-- SCRIPTS -->
     <script>
@@ -634,18 +649,45 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     }
                 });
             });
-            // ADD COMMENT
+            // ADD COMMENT BUTTON CLICKED
             document.querySelectorAll('.addCommentBtn').forEach(button => {
-                button.addEventListener('click', function () {
+                button.addEventListener('click', function() {
                     const taskId = this.getAttribute('data-id');
+                    document.getElementById('commentTaskId').value = taskId;
+                    document.getElementById('addCommentModal').style.display = 'flex';
                 });
+            });
+            // COMMENT FORM SUBMISSION
+            document.getElementById('addCommentForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const taskId = document.getElementById('commentTaskId').value;
+                const commentText = document.getElementById('commentText').value;
+                fetch('db/db_add-comment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `task_id=${taskId}&comment=${encodeURIComponent(commentText)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Success!', 'Comment has been added.', 'success')
+                        .then(() => {
+                            closeModalDetails('addCommentModal');
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error!', 'Failed to add comment.', 'error');
+                    }
+                })
+                .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
             });
         });
         // CLOSE MODAL THAT IS CURRENTLY OPENED
         function closeModalDetails(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-    </script>
+        </script>
 </body>
-
 </html>

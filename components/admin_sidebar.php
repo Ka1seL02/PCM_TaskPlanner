@@ -23,12 +23,16 @@ $profile_img = $_SESSION['pfp'];
                         class="fa-solid fa-table-columns"></i> Dashboard</a></li>
             <li><a href="admin_reports.php"
                     class="<?php echo $current_page == 'admin_reports.php' ? 'active' : ''; ?>"><i
-                        class="fa-solid fa-chart-pie"></i>Reports</a></li>
+                        class="fa-solid fa-chart-pie"></i> Reports</a></li>
             <li><a href="admin_intern-list.php"
                     class="<?php echo $current_page == 'admin_intern-list.php' ? 'active' : ''; ?>"><i
-                        class="fa-solid fa-users"></i>Interns</a></li>
-            <li><a href="admin_users.php" class="<?php echo $current_page == 'admin_users.php' ? 'active' : ''; ?>"><i
-                        class="fa-solid fa-user-tie"></i>User Management</a></li>
+                        class="fa-solid fa-users"></i> Interns</a></li>
+            <li><a href="admin_users.php"
+                    class="<?php echo $current_page == 'admin_users.php' ? 'active' : ''; ?>"><i
+                        class="fa-solid fa-user-tie"></i> User Management</a></li>
+            <li><a href="admin_archived.php"
+                    class="<?php echo $current_page == 'admin_archived.php' ? 'active' : ''; ?>"><i
+                        class="fa-solid fa-archive"></i> Archived</a></li> <!-- New Archived Section -->
         </ul>
     </nav>
     <div class="admin-profile">

@@ -49,7 +49,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
             $limit = 10;
             $offset = ($page - 1) * $limit;
             // BASE QUERY WHEN USER LOGGED-IN
-            $query = "SELECT * FROM tasks WHERE assignedto = ?";
+            $query = "SELECT * FROM tasks WHERE assignedto = ? AND status != 'archived'";
             $params = [$id];
             // IF STATUS FILTER IS APPLIED
             if ($status_filter !== 'all') {
@@ -125,16 +125,19 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                 <?php
                                 switch (strtolower($row['status'])) {
                                     case 'completed':
-                                        echo '<span class="green-text text">Completed</span>';
+                                        echo '<span class="green-text text">' . htmlspecialchars($row['status']) . '</span>';
                                         break;
                                     case 'pending':
-                                        echo '<span class="orange-text text">Pending</span>';
+                                        echo '<span class="orange-text text">' . htmlspecialchars($row['status']) . '</span>';
                                         break;
-                                    case 'missed':
-                                        echo '<span class="red-text text">Missed</span>';
+                                    case 'missing':
+                                    case 'late':
+                                        echo '<span class="red-text text">' . htmlspecialchars($row['status']) . '</span>';
                                         break;
                                     case 'in-progress':
-                                        echo '<span class="blue-text text">In-Progress</span>';
+                                    case 'revision':
+                                    case 'revised':
+                                        echo '<span class="blue-text text">' . htmlspecialchars($row['status']) . '</span>';
                                         break;
                                     default:
                                         echo '<span class="gray-text text">' . htmlspecialchars($row['status']) . '</span>';
@@ -198,6 +201,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 <p><strong>Status:</strong> <span id="taskStatus"></span></p>
                 <p><strong>Task Image / File:</strong> <span id="taskFile"></span></p>
                 <p><strong>Proof Image / File:</strong> <span id="proofFile"></span></p>
+                <p><strong>Comment:</strong> <span id="taskComments"></span></p>
             </div>
             <div class="modal-buttons">
                 <button onclick="closeModalDetails('detailsModal')">Close</button>
@@ -267,6 +271,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     });
                 });
             });
+
             // FETCH AND DISPLAY TASK'S DETAILS
             document.querySelectorAll('.viewTaskBtn').forEach(button => {
                 button.addEventListener('click', function() {
@@ -315,19 +320,22 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                     switch (data.status.toLowerCase()) {
                                         case 'completed':
                                             taskStatusElement.className = 'green-text text';
-                                            taskStatusElement.textContent = 'Completed';
+                                            taskStatusElement.textContent = data.status;
                                             break;
                                         case 'pending':
                                             taskStatusElement.className = 'orange-text text';
-                                            taskStatusElement.textContent = 'Pending';
+                                            taskStatusElement.textContent = data.status;
                                             break;
-                                        case 'missed':
+                                        case 'missing':
+                                        case 'late':
                                             taskStatusElement.className = 'red-text text';
-                                            taskStatusElement.textContent = 'Missed';
+                                            taskStatusElement.textContent = data.status;
                                             break;
                                         case 'in-progress':
+                                        case 'revision':
+                                        case 'revised':
                                             taskStatusElement.className = 'blue-text text';
-                                            taskStatusElement.textContent = 'In-Progress';
+                                            taskStatusElement.textContent = data.status;
                                             break;
                                         default:
                                             taskStatusElement.className = 'gray-text text';
@@ -346,6 +354,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                     } else {
                                         proofFileElement.innerHTML = '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>';
                                     }
+                                    document.getElementById('taskComments').textContent = data.comments ? data.comments : 'None';
                                     document.getElementById('detailsModal').style.display = 'flex';
                                 }
                             } catch (error) {

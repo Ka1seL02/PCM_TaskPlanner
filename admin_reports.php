@@ -5,6 +5,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
     header("Location: login.php");
     exit();
 }
+
+include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
 ?>
 
 <!DOCTYPE html>
@@ -16,8 +18,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
     <title>Reports</title>
     <!-- STYLES -->
     <link rel="stylesheet" href="assets/styles/root.css">
-    <link rel="stylesheet" href="assets/styles/admin_reports.css">
     <link rel="stylesheet" href="assets/styles/sidebar.css">
+    <link rel="stylesheet" href="assets/styles/admin_reports.css">
     <!-- ICONS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -26,38 +28,43 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
     <?php
     $current_page = basename($_SERVER['PHP_SELF']);
     include 'components/admin_sidebar.php';
-    include 'db/db_reports.php';
     ?>
     <div class="main-content">
         <h1>Reports</h1>
         <p>Oversee each intern's task. You may assign a task to an intern, or to all of them.</p>
         <!-- CONTROLS (SEARCH, REFRESH, SORT DROPDOWN & ADD TASK) -->
-        <div class="header-container">
-            <div class="search-section">
+        <div class="filter-controls">
+            <div class="left-section">
+                <!-- REFRESH -->
+                <button id="refreshButton"><i class="fa fa-refresh"></i></button>
+                <!-- SEARCH -->
                 <div class="search-bar">
                     <i class="fa fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search name...">
+                    <input type="text" id="searchInput" placeholder="Search task name..."
+                        value="<?= htmlspecialchars($search_filter) ?>">
                 </div>
-                <button class="search-btn" id="searchBtn">Search</button>
-                <button class="refresh-btn"><i class="fa fa-refresh"></i></button>
+                <button id="searchButton">Search</button>
             </div>
-            <div class="button-group">
-                <div class="status-dropdown-wrapper">
-                    <select class="status-dropdown" id="statusFilter">
+            <div class="right-section">
+                <!-- DROPDOWN -->
+                <div class="dropdown-wrapper">
+                    <select id="statusDropdownFilter">
                         <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>Select Status</option>
+                        <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>Pending</option>
                         <option value="in-progress" <?= $status_filter === 'in-progress' ? 'selected' : '' ?>>In-Progress
                         </option>
                         <option value="completed" <?= $status_filter === 'completed' ? 'selected' : '' ?>>Completed
                         </option>
                         <option value="missed" <?= $status_filter === 'missed' ? 'selected' : '' ?>>Missed</option>
-                        <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>Pending</option>
                     </select>
                 </div>
-                <button class="assign-task-btn" id="assignTaskBtn">
+                <!-- ASSIGN TASK BUTTON -->
+                <button id="assignTaskButton">
                     <i class="fa fa-plus"></i> Assign Task
                 </button>
             </div>
         </div>
+
         <!-- TABLE DISPLAY TASKS -->
         <div class="table-container">
             <?php if ($result->num_rows > 0): ?>
@@ -74,40 +81,30 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody id="taskTableBody">
+                    <tbody>
                         <?php while ($task = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($task['taskname']); ?></td>
                                 <td><?= htmlspecialchars($task['assigned_to']); ?></td>
-                                <td>
-                                    <?php
-                                    $startTime = new DateTime($task['starttime']);
-                                    echo $startTime->format('F j, Y g:i A');
-                                    ?>
-                                </td>
-                                <td>
-                                    <?php
-                                    $dueTime = new DateTime($task['duetime']);
-                                    echo $dueTime->format('F j, Y g:i A');
-                                    ?>
-                                </td>
+                                <td><?= date("F j, Y, g:i A", strtotime($task['starttime'])); ?></td>
+                                <td><?= date("F j, Y, g:i A", strtotime($task['duetime'])); ?></td>
                                 <td>
                                     <?php
                                     switch (strtolower($task['status'])) {
                                         case 'completed':
-                                            echo '<span class="green-text text">Completed</span>';
+                                            echo '<span class="green-text text">' . htmlspecialchars($task["status"]) . '</span>';
                                             break;
                                         case 'pending':
-                                            echo '<span class="orange-text text">Pending</span>';
+                                            echo '<span class="orange-text text">' . htmlspecialchars($task["status"]) . '</span>';
                                             break;
                                         case 'missing':
                                         case 'late':
-                                            echo '<span class="red-text text">Missed</span>';
+                                            echo '<span class="red-text text">' . htmlspecialchars($task["status"]) . '</span>';
                                             break;
                                         case 'in-progress':
                                         case 'revision':
                                         case 'revised':
-                                            echo '<span class="blue-text text">In-Progress</span>';
+                                            echo '<span class="blue-text text">' . htmlspecialchars($task["status"]) . '</span>';
                                             break;
                                         default:
                                             echo '<span class="gray-text text">' . htmlspecialchars($task['status']) . '</span>';
@@ -121,29 +118,24 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                     <?= !empty($task['proof']) ? '<a href="' . htmlspecialchars($task['proof'], ENT_QUOTES, 'UTF-8') . '" target="_blank" class="blue-text text"><i class="fa-solid fa-paperclip"></i> Proof</a>' : '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>'; ?>
                                 </td>
                                 <td>
-                                    <button class="action-btn viewTaskBtn" data-id="<?= $task['id'] ?>">
+                                    <button class="action-btn viewTaskButton" data-id="<?= $task['id'] ?>">
                                         <i class="fa fa-eye"></i>
                                     </button>
                                     <?php if (strtolower($task['status']) !== 'completed'): ?>
-                                        <button class="action-btn editTaskBtn" data-id="<?= $task['id'] ?>">
+                                        <button class="action-btn editTaskButton" data-id="<?= $task['id'] ?>">
                                             <i class="fa fa-pencil"></i>
                                         </button>
                                     <?php endif; ?>
-                                    <?php if (strtolower($task['status']) !== 'completed'): ?>
-                                        <button class="action-btn addCommentBtn" data-id="<?= $task['id'] ?>">
-                                            <i class="fa fa-comment"></i>
-                                        </button>
-                                    <?php endif; ?>
                                     <?php if (strtolower($task['status']) === 'completed'): ?>
-                                        <button class="action-btn archiveTaskBtn" data-id="<?= $task['id'] ?>">
+                                        <button class="action-btn archiveTaskButton" data-id="<?= $task['id'] ?>">
                                             <i class="fa fa-folder-open"></i>
                                         </button>
                                     <?php endif; ?>
-                                    <button class="action-btn deleteTaskBtn" data-id="<?= $task['id'] ?>">
+                                    <button class="action-btn deleteTaskButton" data-id="<?= $task['id'] ?>">
                                         <i class="fa fa-trash"></i>
                                     </button>
                                     <?php if (!empty($task['proof']) && strtolower($task['status']) !== 'completed'): ?>
-                                        <button class="action-btn markCompleteBtn" data-id="<?= $task['id'] ?>">
+                                        <button class="action-btn markCompleteButton" data-id="<?= $task['id'] ?>">
                                             <i class="fa fa-check"></i>
                                         </button>
                                     <?php endif; ?>
@@ -156,7 +148,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 <h2 class="no-data"><i class="fa-solid fa-folder-open"></i> No data found</h2>
             <?php endif; ?>
         </div>
-        <!-- PAGENATION -->
+        <!-- PAGINATION -->
         <?php if ($totalTasks > $itemsPerPage): ?>
             <div class="pagination">
                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
@@ -167,11 +159,12 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 <?php endfor; ?>
             </div>
         <?php endif; ?>
+
         <!-- ASSIGN TASK MODAL -->
         <div id="assignTaskModal" class="modal-overlay">
             <div class="modal-container">
                 <h2>Create New Task</h2>
-                <form id="taskForm" enctype="multipart/form-data">
+                <form id="assignTaskForm" enctype="multipart/form-data">
                     <div class="main">
                         <div class="left-container">
                             <label for="taskName">Task Name</label>
@@ -227,6 +220,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 </form>
             </div>
         </div>
+
         <!-- TASK DETAILS MODAL -->
         <div id="detailsModal" class="modal-overlay">
             <div class="modal-container">
@@ -247,101 +241,98 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 </div>
             </div>
         </div>
+
         <!-- EDIT TASK MODAL -->
         <div id="editTaskModal" class="modal-overlay">
             <div class="modal-container">
                 <h2>Edit Task</h2>
                 <form id="editTaskForm" enctype="multipart/form-data">
-                    <input type="hidden" id="editTaskId" name="taskId">
-                    <label for="editTaskName">Task Name</label>
-                    <input type="text" id="editTaskName" name="taskName" required>
-                    <label for="editTaskDescription">Task Description</label>
-                    <textarea id="editTaskDescription" name="taskDescription" required></textarea>
-                    <label for="editAssignTo">Assign To</label>
-                    <select id="editAssignTo" name="assignTo" required>
-                        <?php
-                        include 'db/db_connection.php';
-                        $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern'";
-                        $internResult = $conn->query($internQuery);
-                        if ($internResult && $internResult->num_rows > 0) {
-                            while ($intern = $internResult->fetch_assoc()) {
-                                echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
-                    <label for="editStartTime">Start Time</label>
-                    <input type="datetime-local" id="editStartTime" name="startTime">
-                    <label for="editDueTime">End Time</label>
-                    <input type="datetime-local" id="editDueTime" name="dueTime">
-                    <label for="editAttachment">Attachment</label>
-                    <input type="file" id="editAttachment" name="attachment"
-                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                    <div class="main">
+                        <div class="left-container">
+                            <input type="hidden" id="editTaskId" name="taskId">
+                            <label for="taskName">Task Name</label>
+                            <input type="text" id="task_Name" name="taskName" required>
+                            <label for="taskDescription">Task Description</label>
+                            <textarea id="task_Description2" name="taskDescription" required></textarea>
+                            <label for="assignTo">Assign To</label>
+                            <select id="assign_To" name="assignTo" required>
+                                <option>Select Intern</option>
+                                <?php
+                                include 'db/db_connection.php';
+                                $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern' ORDER BY fullname ASC";
+                                $internResult = $conn->query($internQuery);
+                                if ($internResult && $internResult->num_rows > 0) {
+                                    while ($intern = $internResult->fetch_assoc()) {
+                                        echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="right-container">
+                            <label for="dueTime">Due</label>
+                            <input type="datetime-local" id="due_Time" name="dueTime">
+                            <label for="editAttachment">Attachment</label>
+                            <input type="file" id="edit_Attachment" name="attachment"
+                                accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                            <label for="taskComment">Comment</label>
+                            <textarea id="task_Comment" name="taskComment"></textarea>
+                        </div>
+                    </div>
                     <div class="modal-buttons">
-                        <button type="submit" id="editBtn" class="assign-btn">Update</button>
+                        <button type="submit" id="editTaskBtn">Update</button>
                         <button type="button" onclick="closeModalDetails('editTaskModal')">Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
-        <!-- ADD COMMENT MODAL -->
-         <div id="addCommentModal" class="modal-overlay">
-            <div class="modal-container">
-                <h2>Add Comment</h2>
-                <form id="addCommentForm">
-                    <input type="hidden" id="commentTaskId" name="taskId">
-                    <label for="commentText">Comment</label>
-                    <textarea id="commentText" name="commentText" required></textarea>
-                    <div class="modal-buttons">
-                        <button type="submit" class="assign-btn">Submit Comment</button>
-                        <button type="button" onclick="closeModalDetails('addCommentModal')">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+
     </div>
-    <!-- SCRIPTS -->
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // SEARCH BUTTON CLICKED
-            const searchBtn = document.getElementById('searchBtn');
-            if (searchBtn) {
-                searchBtn.addEventListener('click', function () {
-                    const searchInput = document.getElementById('searchInput').value;
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('search', searchInput);
-                    if (statusFilter) {
-                        const selectedStatus = statusFilter.value;
-                        currentUrl.searchParams.set('status', selectedStatus);
-                    }
-                    currentUrl.searchParams.set('page', 1);
-                    window.location.href = currentUrl.toString();
-                });
-            }
-            // REFRESH BUTTON CLICKED
-            const refreshBtn = document.querySelector('.refresh-btn');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', function () {
-                    window.location.href = 'admin_reports.php';
-                });
-            }
-            // FILTER STATUS CHANGE
-            const statusFilter = document.getElementById('statusFilter');
-            if (statusFilter) {
-                statusFilter.addEventListener('change', function () {
-                    const selectedStatus = this.value;
-                    const currentUrl = new URL(window.location.href);
-                    currentUrl.searchParams.set('status', selectedStatus);
-                    currentUrl.searchParams.set('page', 1);
-                    window.location.href = currentUrl.toString();
-                });
-            }
+        document.addEventListener("DOMContentLoaded", function() {
+            // Handle status dropdown change
+            document.getElementById('statusDropdownFilter').addEventListener('change', function() {
+                const selectedStatus = this.value;
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('status', selectedStatus);
+                currentUrl.searchParams.set('page', 1); // Reset to the first page
+                window.location.href = currentUrl.toString();
+            });
+
+            // Handle refresh button click
+            document.getElementById('refreshButton').addEventListener('click', function() {
+                window.location.href = 'admin_reports.php';
+            });
+
+            // Handle search button click
+            document.getElementById('searchButton').addEventListener('click', function() {
+                const searchInput = document.getElementById('searchInput').value;
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('search', searchInput);
+                currentUrl.searchParams.set('page', 1); // Reset to the first page
+                window.location.href = currentUrl.toString();
+            });
+
             // SHOW ASSIGN TASK MODAL
-            document.getElementById('assignTaskBtn').addEventListener('click', function () {
+            document.getElementById('assignTaskButton').addEventListener('click', function() {
                 document.getElementById('assignTaskModal').style.display = 'flex';
             });
+
+            // ASSIGN TASK MODAL DUE TIME
+            document.querySelectorAll('input[name="dueTimeOption"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const customDateTimeContainer = document.getElementById('customDateTimeContainer');
+                    if (this.value === 'custom') {
+                        customDateTimeContainer.style.display = 'flex';
+                    } else {
+                        customDateTimeContainer.style.display = 'none';
+                    }
+                });
+            });
+
             // ASSIGN TASK
-            document.getElementById('taskForm').addEventListener('submit', function (event) {
+            document.getElementById('assignTaskForm').addEventListener('submit', function(event) {
                 event.preventDefault();
                 const formData = new FormData(this);
                 // Calculate due time based on selected option
@@ -360,9 +351,9 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 }
                 formData.append('dueTime', dueTime);
                 fetch('db/db_assign-task.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                        method: 'POST',
+                        body: formData
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -374,20 +365,20 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     })
                     .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
             });
+
             // FETCH TASK DETAILS TO DISPLAY
-            document.querySelectorAll('.viewTaskBtn').forEach(button => {
-                button.addEventListener('click', function () {
+            document.querySelectorAll('.viewTaskButton').forEach(button => {
+                button.addEventListener('click', function() {
                     let taskId = this.getAttribute('data-id');
                     fetch('db/db_view-task.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: 'task_id=' + taskId
-                    })
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: 'task_id=' + taskId
+                        })
                         .then(response => response.text())
                         .then(text => {
-                            console.log(text);
                             try {
                                 const data = JSON.parse(text);
                                 if (data.error) {
@@ -448,7 +439,6 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                     } else {
                                         proofFileElement.innerHTML = '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>';
                                     }
-                                    console.log('Comments:', data.comments); // Log the comments for debugging
                                     document.getElementById('taskComments').textContent = data.comments ? data.comments : 'None';
                                     document.getElementById('detailsModal').style.display = 'flex';
                                 }
@@ -459,9 +449,10 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                         .catch(error => console.error('Error:', error));
                 });
             });
+
             // MARK TASK AS COMPLETED
-            document.querySelectorAll('.markCompleteBtn').forEach(button => {
-                button.addEventListener('click', function () {
+            document.querySelectorAll('.markCompleteButton').forEach(button => {
+                button.addEventListener('click', function() {
                     const taskId = this.getAttribute('data-id');
                     const buttonElement = this;
 
@@ -475,12 +466,12 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             fetch('db/db_mark-complete.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                },
-                                body: 'task_id=' + taskId
-                            })
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: 'task_id=' + taskId
+                                })
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.success) {
@@ -490,6 +481,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                                             icon: 'success'
                                         }).then(() => {
                                             buttonElement.closest('tr').remove();
+                                            window.location.href = 'admin_reports.php';
                                         });
                                     } else {
                                         Swal.fire({
@@ -504,45 +496,141 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     })
                 });
             });
+
+            // DELETE TASK
+            document.querySelectorAll('.deleteTaskButton').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-id');
+                    const buttonElement = this;
+
+                    Swal.fire({
+                        title: 'Delete Task?',
+                        text: 'Are you sure you want to delete this task?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes',
+                        cancelButtonText: 'No'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('db/db_delete-task.php', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: 'task_id=' + taskId
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire({
+                                            title: 'Task Deleted',
+                                            text: 'The task has been deleted',
+                                            icon: 'success'
+                                        }).then(() => {
+                                            buttonElement.closest('tr').remove();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Error',
+                                            text: 'An error occurred while deleting the task',
+                                            icon: 'error'
+                                        });
+                                    }
+                                })
+                                .catch(error => console.error('Error:', error));
+                        }
+                    });
+                });
+            });
+
+            // ARCHIVE TASK
+            document.querySelectorAll('.archiveTaskButton').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-id');
+                    const buttonElement = this;
+
+                    Swal.fire({
+                        title: 'Archive Task?',
+                        text: 'Are you sure you want to archive this task?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes',
+                        cancelButtonText: 'No'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch('db/db_archive-task.php', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    },
+                                    body: 'task_id=' + taskId
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire({
+                                            title: 'Task Archived',
+                                            text: 'The task has been archived',
+                                            icon: 'success'
+                                        }).then(() => {
+                                            buttonElement.closest('tr').remove();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Error',
+                                            text: 'An error occurred while archiving the task',
+                                            icon: 'error'
+                                        });
+                                    }
+                                })
+                                .catch(error => console.error('Error:', error));
+                        }
+                    });
+                });
+            });
+
             // EDIT TASK BUTTON CLICKED
-            document.querySelectorAll('.editTaskBtn').forEach(button => {
-                button.addEventListener('click', function () {
-                    let taskId = this.getAttribute('data-id');
+            document.querySelectorAll('.editTaskButton').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-id');
                     fetch('db/db_view-task.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: 'task_id=' + taskId
-                    })
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: 'task_id=' + taskId
+                        })
                         .then(response => response.json())
                         .then(data => {
                             if (data.error) {
-                                alert('Task not found');
+                                Swal.fire('Error!', 'Task not found.', 'error');
                             } else {
-                                document.getElementById('editTaskId').value = taskId;
-                                document.getElementById('editTaskName').value = data.task_name;
-                                document.getElementById('editTaskDescription').value = data.task_description;
-                                document.getElementById('editAssignTo').value = data.assigned_to;
-                                document.getElementById('editStartTime').value = data.start_time;
-                                document.getElementById('editDueTime').value = data.due_time;
+                                document.getElementById('editTaskId').value = data.id;
+                                document.getElementById('task_Name').value = data.task_name;
+                                document.getElementById('task_Description2').value = data.task_description;
+                                document.getElementById('assign_To').value = data.assigned_to;
+
+                                // Format the due_time to YYYY-MM-DDTHH:MM
+                                const dueTime = new Date(data.due_time);
+                                const formattedDueTime = dueTime.toISOString().slice(0, 16);
+                                document.getElementById('due_Time').value = formattedDueTime;
+
+                                document.getElementById('task_Comment').value = data.comments;
                                 document.getElementById('editTaskModal').style.display = 'flex';
                             }
                         })
-                        .catch(error => console.error('Error:', error));
+                        .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
                 });
             });
-            // FORM SUBMISSION TO EDIT TASKS DETAILS
-            document.getElementById('editTaskForm').addEventListener('submit', function (event) {
+
+            // HANDLE EDIT TASK FORM SUBMISSION
+            document.getElementById('editTaskForm').addEventListener('submit', function(event) {
                 event.preventDefault();
                 const formData = new FormData(this);
-                for (let [key, value] of formData.entries()) {
-                    console.log(key, value);
-                }
                 fetch('db/db_edit-task.php', {
-                    method: 'POST',
-                    body: formData
-                })
+                        method: 'POST',
+                        body: formData
+                    })
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -554,140 +642,14 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     })
                     .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
             });
-            // DELETE TASK
-            document.querySelectorAll('.deleteTaskBtn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const taskId = this.getAttribute('data-id');
-                    const buttonElement = this;
-                    Swal.fire({
-                        title: 'Delete Task?',
-                        text: 'Are you sure you want to delete this task?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes, Delete',
-                        cancelButtonText: 'Cancel',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch('db/db_delete-task.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                },
-                                body: `task_id=${taskId}`
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        Swal.fire('Deleted!', 'Task has been deleted.', 'success')
-                                            .then(() => {
-                                                // Remove the task row from the table
-                                                buttonElement.closest('tr').remove();
-                                                location.reload();
-                                            });
-                                    } else {
-                                        Swal.fire('Error!', 'Failed to delete task.', 'error');
-                                    }
-                                })
-                                .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
-                        }
-                    });
-                });
-            });
-            // ARCHIVE TASK
-            document.querySelectorAll('.archiveTaskBtn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const taskId = this.getAttribute('data-id');
-                    const buttonElement = this;
 
-                    Swal.fire({
-                        title: 'Save Task Record?',
-                        text: 'Do you want to save this task entry?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes',
-                        cancelButtonText: 'No'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            fetch('db/db_archive-task.php', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                },
-                                body: 'task_id=' + taskId
-                            })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        Swal.fire({
-                                            title: 'Task Saved',
-                                            text: 'The task has been saved',
-                                            icon: 'success'
-                                        }).then(() => {
-                                            buttonElement.closest('tr').remove();
-                                        });
-                                    } else {
-                                        Swal.fire({
-                                            title: 'Error',
-                                            text: 'An error occurred while saving the task.',
-                                            icon: 'error'
-                                        });
-                                    }
-                                })
-                                .catch(error => console.error('Error:', error));
-                        }
-                    })
-                });
-            });
-            // RADIO BUTTON CHANGE
-            document.querySelectorAll('input[name="dueTimeOption"]').forEach(radio => {
-                radio.addEventListener('change', function () {
-                    const customDateTimeContainer = document.getElementById('customDateTimeContainer');
-                    if (this.value === 'custom') {
-                        customDateTimeContainer.style.display = 'flex';
-                    } else {
-                        customDateTimeContainer.style.display = 'none';
-                    }
-                });
-            });
-            // ADD COMMENT BUTTON CLICKED
-            document.querySelectorAll('.addCommentBtn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const taskId = this.getAttribute('data-id');
-                    document.getElementById('commentTaskId').value = taskId;
-                    document.getElementById('addCommentModal').style.display = 'flex';
-                });
-            });
-            // COMMENT FORM SUBMISSION
-            document.getElementById('addCommentForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const taskId = document.getElementById('commentTaskId').value;
-                const commentText = document.getElementById('commentText').value;
-                fetch('db/db_add-comment.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `task_id=${taskId}&comment=${encodeURIComponent(commentText)}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire('Success!', 'Comment has been added.', 'success')
-                        .then(() => {
-                            closeModalDetails('addCommentModal');
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire('Error!', 'Failed to add comment.', 'error');
-                    }
-                })
-                .catch(error => Swal.fire('Error!', 'Something went wrong.', 'error'));
-            });
         });
+
         // CLOSE MODAL THAT IS CURRENTLY OPENED
         function closeModalDetails(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-        </script>
+    </script>
 </body>
+
 </html>

@@ -17,11 +17,12 @@ if (isset($_POST['task_id'])) {
 
     if ($task) {
         echo json_encode([
+            "id" => $task['id'],
             "task_name" => $task['taskname'],
             "task_description" => $task['taskdescription'],
             "start_time" => $task['starttime'],
             "due_time" => $task['duetime'],
-            "assigned_to" => $task['assigned_user'],
+            "assigned_to" => $task['assignedto'],
             "status" => $task['status'],
             "attachment" => $task['attachment'],
             "proof" => $task['proof'],

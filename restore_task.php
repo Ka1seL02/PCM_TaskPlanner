@@ -6,7 +6,7 @@ if (isset($_GET['id'])) {
     $task_id = $_GET['id'];
 
     // Check if the task exists
-    $check_sql = "SELECT * FROM tasks WHERE id = ? AND status = 'archived'";
+    $check_sql = "SELECT * FROM tasks WHERE id = ? AND status = 'Archived'";
     $stmt = $conn->prepare($check_sql);
     $stmt->bind_param("i", $task_id);
     $stmt->execute();

@@ -22,7 +22,7 @@ body {
     font-family: 'Poppins', serif;
 }
 
-.header-container {
+.filter-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -32,12 +32,22 @@ body {
     margin-top: 10px;
 }
 
-/* SEARCH BAR **/
-.search-section {
+.left-section,
+.right-section {
     display: flex;
     gap: 5px;
 }
 
+/* REFRESH BUTTON */
+#refreshButton {
+    background-color: var(--white);
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid var(--shadow);
+}
+
+/* SEARCH BAR */
 .search-bar {
     display: flex;
     align-items: center;
@@ -61,7 +71,7 @@ body {
     font-weight: 525;
 }
 
-.search-btn {
+#searchButton {
     background-color: var(--yellow);
     color: var(--black);
     padding: 10px 20px;
@@ -70,22 +80,16 @@ body {
     font-weight: 525;
     cursor: pointer;
     border: none;
+    transition: ease-in-out .3s;
 }
 
-.search-btn:hover {
+#searchButton:hover {
     background-color: var(--orange);
     font-weight: bold;
 }
 
-.refresh-btn {
-    background-color: var(--white);
-    padding: 10px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    border: 1px solid var(--shadow);
-}
-
-.status-dropdown {
+/* DROPDOWN STATUS */
+#statusDropdownFilter {
     background-color: var(--white);
     color: var(--black);
     padding: 10px 40px 10px 20px;
@@ -100,14 +104,15 @@ body {
     position: relative;
 }
 
-.status-dropdown-wrapper {
+/* DROPDOWN WRAPPER DESIGN (TO MAKE IT LOOK GOOD) */
+.dropdown-wrapper {
     position: relative;
     display: inline-block;
     border-radius: 10px;
     border: 1px solid var(--shadow);
 }
 
-.status-dropdown-wrapper::after {
+.dropdown-wrapper::after {
     content: '\f078'; /* FONT AWESOME ARROW DOWN */
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
@@ -119,7 +124,8 @@ body {
     color: var(--black);
 }
 
-.assign-task-btn {
+/* ASSIGN TASK BUTTON */
+#assignTaskButton {
     background-color: var(--yellow);
     color: var(--black);
     padding: 10px 20px;
@@ -130,16 +136,16 @@ body {
     border: none;
 }
 
-.assign-task-btn i {
+#assignTaskButton i {
     margin-right: 10px;
 }
 
-.assign-task-btn:hover {
+#assignTaskButton:hover {
     background-color: var(--orange);
     font-weight: bold;
 }
 
-/* TABLE DISPLAY TASKS */
+/* TABLE TO DISPLAY TASKS */
 .table-container {
     width: 100%;
     min-width: 1100px;
@@ -185,20 +191,17 @@ td img {
     object-fit: cover;
 }
 
-/* LEFT-MOST COLUMN */
 tr td:first-child {
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
     border-right: none;
 }
 
-/* THE REST OF COLUMNS */
 tr td:not(:first-child):not(:last-child) {
     border-left: none;
     border-right: none;
 }
 
-/* RIGHT-MOST COLUMN */
 tr td:last-child {
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
@@ -211,19 +214,21 @@ tr td:last-child {
     font-size: 16px;
 }
 
-/* NO DATA */
+/* IF NO DATA IS RETRIEVE */
 .no-data {
     margin-top: 20px;
     color: var(--light-grey);
 }
 
 /* ASSIGN TASK */
-#assignTaskModal {
+#assignTaskModal,
+#editTaskModal {
     display: none;
     font-family: 'Inter', sans-serif;
 }
 
-#assignTaskModal .modal-container {
+#assignTaskModal .modal-container,
+#editTaskModal .modal-container {
     display: flex;
     flex-direction: column;
     background-color: var(--white);
@@ -231,14 +236,17 @@ tr td:last-child {
     padding: 50px;
 }
 
-#assignTaskModal .main {
+#assignTaskModal .main,
+#editTaskModal .main {
     display: flex;
     flex-direction: row;
     gap: 100px;
 }
 
 #assignTaskModal .left-container,
-#assignTaskModal .right-container {
+#assignTaskModal .right-container,
+#editTaskModal .left-container,
+#editTaskModal .right-container {
     display: flex;
     flex-direction: column;
 }
@@ -246,7 +254,11 @@ tr td:last-child {
 #assignTaskModal input[type="text"],
 #assignTaskModal input[type="datetime-local"],
 #assignTaskModal input[type="file"],
-#assignTaskModal textarea {
+#assignTaskModal textarea,
+#editTaskModal input[type="text"],
+#editTaskModal input[type="datetime-local"],
+#editTaskModal input[type="file"],
+#editTaskModal textarea {
     width: 350px;
 }
 

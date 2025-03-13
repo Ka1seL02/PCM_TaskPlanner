@@ -23,9 +23,11 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
 </head>
 
 <body>
-    <?php $current_page = basename($_SERVER['PHP_SELF']);
+    <?php
+    $current_page = basename($_SERVER['PHP_SELF']);
     include 'components/admin_sidebar.php';
     include 'db/db_connection.php';
+
     // FETCH USERS BASED IF ADMIN OR SUPERVISOR LOGGED IN
     $position = $_SESSION['position'];
     $department = $_SESSION['department'];
@@ -34,7 +36,10 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
     $offset = ($page - 1) * $limit;
     $department_filter = isset($_GET['department']) ? $_GET['department'] : 'all';
     $search_filter = isset($_GET['search']) ? $_GET['search'] : '';
-    if ($position == 'Admin') {
+
+    $stmt = null;
+
+    if ($position == 'Administrator') {
         if ($department_filter === 'all') {
             $userQuery = "SELECT id, fullname, department FROM users WHERE position = 'Intern' AND fullname LIKE ? LIMIT ? OFFSET ?";
             $stmt = $conn->prepare($userQuery);
@@ -52,22 +57,29 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
         $search_param = '%' . $search_filter . '%';
         $stmt->bind_param('ssii', $department, $search_param, $limit, $offset);
     }
-    $stmt->execute();
-    $userResult = $stmt->get_result();
-    $users = [];
-    while ($user = $userResult->fetch_assoc()) {
-        // Fetch the number of tasks assigned to the user that are not completed
-        $taskQuery = "SELECT COUNT(*) as task_count FROM tasks WHERE assignedto = ? AND status IN ('In-Progress', 'Pending', 'Missed')";
-        $taskStmt = $conn->prepare($taskQuery);
-        $taskStmt->bind_param('i', $user['id']);
-        $taskStmt->execute();
-        $taskResult = $taskStmt->get_result();
-        $taskCount = $taskResult->fetch_assoc()['task_count'];
-        $user['task_count'] = $taskCount;
-        $users[] = $user;
+
+    if ($stmt && $stmt->execute()) {
+        $userResult = $stmt->get_result();
+        $users = [];
+        while ($user = $userResult->fetch_assoc()) {
+            // Fetch the number of tasks assigned to the user that are not completed
+            $taskQuery = "SELECT COUNT(*) as task_count FROM tasks WHERE assignedto = ? AND status IN ('In-Progress', 'Pending', 'Missed')";
+            $taskStmt = $conn->prepare($taskQuery);
+            $taskStmt->bind_param('i', $user['id']);
+            $taskStmt->execute();
+            $taskResult = $taskStmt->get_result();
+            $taskCount = $taskResult->fetch_assoc()['task_count'];
+            $user['task_count'] = $taskCount;
+            $users[] = $user;
+        }
+    } else {
+        echo "Error: Unable to prepare statement.";
+        exit();
     }
+
     // CALCULATE HOW MANY PAGES ARE NEEDED
-    if ($position == 'Admin') {
+    $totalStmt = null;
+    if ($position == 'Administrator') {
         if ($department_filter === 'all') {
             $totalUsersQuery = "SELECT COUNT(*) as total FROM users WHERE position = 'Intern' AND fullname LIKE ?";
             $totalStmt = $conn->prepare($totalUsersQuery);
@@ -82,10 +94,15 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
         $totalStmt = $conn->prepare($totalUsersQuery);
         $totalStmt->bind_param('ss', $department, $search_param);
     }
-    $totalStmt->execute();
-    $totalResult = $totalStmt->get_result();
-    $totalUsers = $totalResult->fetch_assoc()['total'];
-    $totalPages = ceil($totalUsers / $limit);
+
+    if ($totalStmt && $totalStmt->execute()) {
+        $totalResult = $totalStmt->get_result();
+        $totalUsers = $totalResult->fetch_assoc()['total'];
+        $totalPages = ceil($totalUsers / $limit);
+    } else {
+        echo "Error: Unable to prepare total users statement.";
+        exit();
+    }
     ?>
     <!-- MAIN CONTENT -->
     <div class="main-content">
@@ -102,7 +119,7 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
             </div>
             <div class="button-group">
                 <!-- ONLY SHOW DROPDOWN IF USER IS ADMIN -->
-                <?php if ($_SESSION['position'] == 'Admin'): ?>
+                <?php if ($_SESSION['position'] == 'Administrator'): ?>
                     <div class="button-group">
                         <div class="department-dropdown-wrapper">
                             <select class="department-dropdown" id="departmentFilter">
@@ -170,41 +187,63 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+
         <!-- ASSIGN TASK MODAL -->
         <div id="assignTaskModal" class="modal-overlay">
             <div class="modal-container">
                 <h2>Create New Task</h2>
-                <form id="taskForm" enctype="multipart/form-data">
-                    <label for="taskName">Task Name</label>
-                    <input type="text" id="taskName" name="taskName" required>
-                    <label for="taskDescription">Task Description</label>
-                    <textarea id="taskDescription" name="taskDescription" required></textarea>
-                    <!-- Dropbox to assign who to assign the task to -->
-                    <label for="assignTo">Assign To</label>
-                    <select id="assignto" name="assignTo" required>
-                        <option value="">Select Intern</option>
-                        <?php
-                        include 'db/db_connection.php';
-                        // Query to get all interns' ids and fullnames
-                        $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern'";
-                        $internResult = $conn->query($internQuery);
-                        if ($internResult && $internResult->num_rows > 0) {
-                            while ($intern = $internResult->fetch_assoc()) {
-                                echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
-                            }
-                        }
-                        ?>
-                    </select>
-                    <label for="startTime">Start Time</label>
-                    <input type="datetime-local" id="startTime" name="startTime" required>
-                    <label for="dueTime">End Time</label>
-                    <input type="datetime-local" id="dueTime" name="dueTime" required>
-                    <label for="attachment">Attachment</label>
-                    <input type="file" id="attachment" name="attachment"
-                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                <form id="assignTaskForm" enctype="multipart/form-data">
+                    <div class="main">
+                        <div class="left-container">
+                            <label for="taskName">Task Name</label>
+                            <input type="text" id="taskName" name="taskName" required>
+                            <label for="taskDescription">Task Description</label>
+                            <textarea id="taskDescription" name="taskDescription" required></textarea>
+                            <label for="assignTo">Assign To</label>
+                            <select id="assignTo" name="assignTo" required>
+                                <option>Select Intern</option>
+                                <?php
+                                include 'db/db_connection.php';
+                                $internQuery = "SELECT id, fullname FROM users WHERE position = 'Intern' ORDER BY fullname ASC";
+                                $internResult = $conn->query($internQuery);
+                                if ($internResult && $internResult->num_rows > 0) {
+                                    while ($intern = $internResult->fetch_assoc()) {
+                                        echo '<option value="' . htmlspecialchars($intern['id']) . '">' . htmlspecialchars($intern['fullname']) . '</option>';
+                                    }
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="right-container">
+                            <label for="dueTime">Due</label>
+                            <div class="radio-buttons">
+                                <div>
+                                    <input type="radio" id="nextDay" name="dueTimeOption" value="nextDay" required>
+                                    <label for="nextDay">Next Day</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="nextWeek" name="dueTimeOption" value="nextWeek">
+                                    <label for="nextWeek">Next Week</label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="custom" name="dueTimeOption" value="custom">
+                                    <label for="custom">Custom</label>
+                                </div>
+                            </div>
+                            <div id="customDateTimeContainer">
+                                <label for="customDueTime">Custom Due Time</label>
+                                <input type="datetime-local" id="customDueTime" name="customDueTime">
+                            </div>
+                            <label for="editAttachment">Attachment</label>
+                            <input type="file" id="editAttachment" name="attachment"
+                                accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                            <label for="taskComment">Comment</label>
+                            <textarea id="taskComment" name="taskComment"></textarea>
+                        </div>
+                    </div>
                     <div class="modal-buttons">
                         <button type="submit" id="assignBtn" class="assign-btn">Assign</button>
-                        <button onclick="closeModalDetails('assignTaskModal')">Cancel</button>
+                        <button type="button" onclick="closeModalDetails('assignTaskModal')">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -247,21 +286,23 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
                     window.location.href = 'admin_intern-list.php';
                 });
             }
+
             // HANDLE ASSIGN TASK BUTTON CLICKED
             document.querySelectorAll('.assignTaskBtn').forEach(button => {
                 button.addEventListener('click', function () {
                     const userId = this.getAttribute('data-id');
                     const assignTaskModal = document.getElementById('assignTaskModal');
-                    const assignToSelect = document.getElementById('assignto');
+                    const assignToSelect = document.getElementById('assignTo');
                     assignToSelect.value = userId;
                     assignToSelect.disabled = true;
                     assignTaskModal.style.display = 'flex';
                 });
             });
+
             // HANDLE FORM SUBMISSION TO ASSIGN TASK
-            document.getElementById('taskForm').addEventListener('submit', function (event) {
+            document.getElementById('assignTaskForm').addEventListener('submit', function (event) {
                 event.preventDefault();
-                const assignToSelect = document.getElementById('assignto');
+                const assignToSelect = document.getElementById('assignTo');
                 assignToSelect.disabled = false;
                 const formData = new FormData(this);
                 fetch('db/db_assign-task.php', {

@@ -194,14 +194,6 @@ tr td:last-child {
     color: var(--light-grey);
 }
 
-.modal-container {
-    background: var(--white);
-    padding: 30px;
-    border-radius: 8px;
-    width: 400px;
-    position: relative;
-}
-
 .modal-container h2 {
     margin-bottom: 30px;
     color: var(--dark-grey);
@@ -297,4 +289,61 @@ button[type="submit"]:hover {
 .pagination span {
     padding: 8px 12px;
     font-weight: bold;
+}
+
+/* ASSIGN TASK */
+#assignTaskModal,
+#editTaskModal {
+    display: none;
+    font-family: 'Inter', sans-serif;
+}
+
+#assignTaskModal .modal-container,
+#editTaskModal .modal-container {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--white);
+    border-radius: 20px;
+    padding: 50px;
+}
+
+#assignTaskModal .main,
+#editTaskModal .main {
+    display: flex;
+    flex-direction: row;
+    gap: 100px;
+}
+
+#assignTaskModal .left-container,
+#assignTaskModal .right-container,
+#editTaskModal .left-container,
+#editTaskModal .right-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#assignTaskModal input[type="text"],
+#assignTaskModal input[type="datetime-local"],
+#assignTaskModal input[type="file"],
+#assignTaskModal textarea,
+#editTaskModal input[type="text"],
+#editTaskModal input[type="datetime-local"],
+#editTaskModal input[type="file"],
+#editTaskModal textarea {
+    width: 350px;
+}
+
+#customDateTimeContainer {
+    display: none;
+    flex-direction: column;
+}
+
+.radio-buttons {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+#customDateTimeContainer {
+    margin-left: 10px;
 }

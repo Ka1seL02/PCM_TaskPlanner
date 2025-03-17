@@ -5,12 +5,13 @@ include 'db_connection.php';
 $position = $_SESSION['position'];
 $department = $_SESSION['department'];
 
-// Define the status filter and search filter
+// Define the filters
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $search_filter = isset($_GET['search']) ? $_GET['search'] : '';
+$school_filter = isset($_GET['school']) ? $_GET['school'] : 'all';
 
-// Fetch tasks from the database
-$sql = "SELECT t.id, t.taskname, t.status, t.assignedto, t.starttime, t.duetime, t.proof, t.attachment, u.fullname AS assigned_to 
+// Start building the SQL query
+$sql = "SELECT t.*, u.fullname, u.school
         FROM tasks t
         LEFT JOIN users u ON t.assignedto = u.id
         WHERE t.status != 'Archived'";
@@ -30,6 +31,11 @@ if (!empty($search_filter)) {
     $sql .= " AND t.taskname LIKE '%$search_filter%'";
 }
 
+// Add condition to filter tasks based on school
+if ($school_filter !== 'all') {
+    $sql .= " AND u.school = '" . $conn->real_escape_string($school_filter) . "'";
+}
+
 $sql .= " ORDER BY t.id";
 
 // Pagination
@@ -37,22 +43,14 @@ $itemsPerPage = 10;
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($currentPage - 1) * $itemsPerPage;
 
+// Create a separate SQL query for counting total results (without LIMIT)
+$countSql = $sql;
 $sql .= " LIMIT $itemsPerPage OFFSET $offset";
 
 $result = $conn->query($sql);
 
 // Fetch total number of tasks for pagination
-$totalTasksSql = "SELECT COUNT(*) AS total FROM tasks t LEFT JOIN users u ON t.assignedto = u.id WHERE t.status != 'Archived'";
-if ($position === 'Supervisor') {
-    $totalTasksSql .= " AND u.department = '$department'";
-}
-if ($status_filter !== 'all') {
-    $totalTasksSql .= " AND t.status = '$status_filter'";
-}
-if (!empty($search_filter)) {
-    $totalTasksSql .= " AND t.taskname LIKE '%$search_filter%'";
-}
-$totalResult = $conn->query($totalTasksSql);
+$totalResult = $conn->query("SELECT COUNT(*) AS total FROM ($countSql) AS count_table");
 $totalTasks = $totalResult->fetch_assoc()['total'];
 $totalPages = ceil($totalTasks / $itemsPerPage);
 

@@ -6,7 +6,8 @@ if (!isset($_SESSION['id']) || !isset($_SESSION['username'])) {
     exit();
 }
 
-include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
+include 'db/db_admin-reports.php'; // This now contains all your query logic
+// Remove the redundant $sql and $result definitions that were here
 ?>
 
 <!DOCTYPE html>
@@ -48,7 +49,7 @@ include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
             <div class="right-section">
                 <!-- DROPDOWN -->
                 <div class="dropdown-wrapper">
-                    <select id="statusDropdownFilter">
+                    <select id="statusDropdownFilter" name="status">
                         <option value="all" <?= $status_filter === 'all' ? 'selected' : '' ?>>Select Status</option>
                         <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>Pending</option>
                         <option value="in-progress" <?= $status_filter === 'in-progress' ? 'selected' : '' ?>>In-Progress
@@ -58,6 +59,27 @@ include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
                         <option value="missed" <?= $status_filter === 'missed' ? 'selected' : '' ?>>Missed</option>
                     </select>
                 </div>
+                <div class="right-section">
+
+             <!-- Add this next to your status dropdown -->
+             <div class="dropdown-wrapper">
+                <select id="schoolDropdownFilter" name="school">
+                    <option value="all" <?= $school_filter === 'all' ? 'selected' : '' ?>>Select School</option>
+                    <?php
+                    include 'db/db_connection.php';
+                    // Get unique schools from users table
+                    $schoolQuery = "SELECT DISTINCT school FROM users WHERE school IS NOT NULL AND school != '' ORDER BY school ASC";
+                    $schoolResult = $conn->query($schoolQuery);
+                    if ($schoolResult && $schoolResult->num_rows > 0) {
+                        while ($row = $schoolResult->fetch_assoc()) {
+                            $school = $row['school'];
+                            echo '<option value="' . htmlspecialchars($school) . '" ' . ($school_filter == $school ? 'selected' : '') . '>' . htmlspecialchars($school) . '</option>';
+                        }
+                    }
+                    ?>
+                    </select>
+                </div>
+            </div>
                 <!-- ASSIGN TASK BUTTON -->
                 <button id="assignTaskButton">
                     <i class="fa fa-plus"></i> Assign Task
@@ -73,6 +95,7 @@ include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
                         <tr>
                             <th>Task</th>
                             <th>Assigned To</th>
+                            <th>School</th>
                             <th>Given</th>
                             <th>Due</th>
                             <th>Status</th>
@@ -85,7 +108,8 @@ include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
                         <?php while ($task = $result->fetch_assoc()): ?>
                             <tr>
                                 <td><?= htmlspecialchars($task['taskname']); ?></td>
-                                <td><?= htmlspecialchars($task['assigned_to']); ?></td>
+                                <td><?= htmlspecialchars($task['fullname']); ?></td>
+                                <td><?= htmlspecialchars($task['school']); ?></td>
                                 <td><?= date("F j, Y, g:i A", strtotime($task['starttime'])); ?></td>
                                 <td><?= date("F j, Y, g:i A", strtotime($task['duetime'])); ?></td>
                                 <td>
@@ -649,6 +673,15 @@ include 'db/db_admin-reports.php'; // Include the logic for fetching tasks
         function closeModalDetails(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
+
+        // Add this to your existing DOMContentLoaded function
+document.getElementById('schoolDropdownFilter').addEventListener('change', function() {
+    const selectedSchool = this.value;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('school', selectedSchool);
+    currentUrl.searchParams.set('page', 1); // Reset to the first page
+    window.location.href = currentUrl.toString();
+});
     </script>
 </body>
 

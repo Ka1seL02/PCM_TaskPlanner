@@ -104,6 +104,22 @@ body {
     position: relative;
 }
 
+/* DROPDOWN SCHOOL */
+#schoolDropdownFilter {
+    background-color: var(--white);
+    color: var(--black);
+    padding: 10px 40px 10px 20px;
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 525;
+    cursor: pointer;
+    border: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    position: relative;
+}
+
 /* DROPDOWN WRAPPER DESIGN (TO MAKE IT LOOK GOOD) */
 .dropdown-wrapper {
     position: relative;

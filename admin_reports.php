@@ -93,6 +93,7 @@ include 'db/db_admin-reports.php'; // This now contains all your query logic
                 <table>
                     <thead>
                         <tr>
+                            <th>Profile</th>
                             <th>Task</th>
                             <th>Assigned To</th>
                             <th>School</th>
@@ -101,72 +102,75 @@ include 'db/db_admin-reports.php'; // This now contains all your query logic
                             <th>Status</th>
                             <th>Attachment</th>
                             <th>Proof</th>
-                            <th></th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php while ($task = $result->fetch_assoc()): ?>
-                            <tr>
-                                <td><?= htmlspecialchars($task['taskname']); ?></td>
-                                <td><?= htmlspecialchars($task['fullname']); ?></td>
-                                <td><?= htmlspecialchars($task['school']); ?></td>
-                                <td><?= date("F j, Y, g:i A", strtotime($task['starttime'])); ?></td>
-                                <td><?= date("F j, Y, g:i A", strtotime($task['duetime'])); ?></td>
-                                <td>
-                                    <?php
-                                    switch (strtolower($task['status'])) {
-                                        case 'completed':
-                                            echo '<span class="green-text text">' . htmlspecialchars($task["status"]) . '</span>';
-                                            break;
-                                        case 'pending':
-                                            echo '<span class="orange-text text">' . htmlspecialchars($task["status"]) . '</span>';
-                                            break;
-                                        case 'missing':
-                                        case 'late':
-                                            echo '<span class="red-text text">' . htmlspecialchars($task["status"]) . '</span>';
-                                            break;
-                                        case 'in-progress':
-                                        case 'revision':
-                                        case 'revised':
-                                            echo '<span class="blue-text text">' . htmlspecialchars($task["status"]) . '</span>';
-                                            break;
-                                        default:
-                                            echo '<span class="gray-text text">' . htmlspecialchars($task['status']) . '</span>';
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <?= !empty($task['attachment']) ? '<a href="' . htmlspecialchars($task['attachment'], ENT_QUOTES, 'UTF-8') . '" target="_blank" class="blue-text text"><i class="fa-solid fa-paperclip"></i> Attachment</a>' : '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Attachment</span>'; ?>
-                                </td>
-                                <td>
-                                    <?= !empty($task['proof']) ? '<a href="' . htmlspecialchars($task['proof'], ENT_QUOTES, 'UTF-8') . '" target="_blank" class="blue-text text"><i class="fa-solid fa-paperclip"></i> Proof</a>' : '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>'; ?>
-                                </td>
-                                <td>
-                                    <button class="action-btn viewTaskButton" data-id="<?= $task['id'] ?>">
-                                        <i class="fa fa-eye"></i>
-                                    </button>
-                                    <?php if (strtolower($task['status']) !== 'completed'): ?>
-                                        <button class="action-btn editTaskButton" data-id="<?= $task['id'] ?>">
-                                            <i class="fa fa-pencil"></i>
-                                        </button>
-                                    <?php endif; ?>
-                                    <?php if (strtolower($task['status']) === 'completed'): ?>
-                                        <button class="action-btn archiveTaskButton" data-id="<?= $task['id'] ?>">
-                                            <i class="fa fa-folder-open"></i>
-                                        </button>
-                                    <?php endif; ?>
-                                    <button class="action-btn deleteTaskButton" data-id="<?= $task['id'] ?>">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
-                                    <?php if (!empty($task['proof']) && strtolower($task['status']) !== 'completed'): ?>
-                                        <button class="action-btn markCompleteButton" data-id="<?= $task['id'] ?>">
-                                            <i class="fa fa-check"></i>
-                                        </button>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endwhile; ?>
-                    </tbody>
+    <?php while ($task = $result->fetch_assoc()): ?>
+        <tr>
+            <td>
+                <img src="<?= htmlspecialchars($task['pfp']); ?>" alt="Profile Picture" class="profile-image" onclick="openProfileModal('<?= htmlspecialchars($task['pfp']); ?>')">
+            </td>
+            <td><?= htmlspecialchars($task['taskname']); ?></td>
+            <td><?= htmlspecialchars($task['fullname']); ?></td>
+            <td><?= htmlspecialchars($task['school']); ?></td>
+            <td><?= date("F j, Y, g:i A", strtotime($task['starttime'])); ?></td>
+            <td><?= date("F j, Y, g:i A", strtotime($task['duetime'])); ?></td>
+            <td>
+                <?php
+                switch (strtolower($task['status'])) {
+                    case 'completed':
+                        echo '<span class="green-text text">' . htmlspecialchars($task["status"]) . '</span>';
+                        break;
+                    case 'pending':
+                        echo '<span class="orange-text text">' . htmlspecialchars($task["status"]) . '</span>';
+                        break;
+                    case 'missing':
+                    case 'late':
+                        echo '<span class="red-text text">' . htmlspecialchars($task["status"]) . '</span>';
+                        break;
+                    case 'in-progress':
+                    case 'revision':
+                    case 'revised':
+                        echo '<span class="blue-text text">' . htmlspecialchars($task["status"]) . '</span>';
+                        break;
+                    default:
+                        echo '<span class="gray-text text">' . htmlspecialchars($task['status']) . '</span>';
+                }
+                ?>
+            </td>
+            <td>
+                <?= !empty($task['attachment']) ? '<a href="' . htmlspecialchars($task['attachment'], ENT_QUOTES, 'UTF-8') . '" target="_blank" class="blue-text text"><i class="fa-solid fa-paperclip"></i> Attachment</a>' : '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Attachment</span>'; ?>
+            </td>
+            <td>
+                <?= !empty($task['proof']) ? '<a href="' . htmlspecialchars($task['proof'], ENT_QUOTES, 'UTF-8') . '" target="_blank" class="blue-text text"><i class="fa-solid fa-paperclip"></i> Proof</a>' : '<span class="gray-text text"><i class="fa-solid fa-xmark"></i> No Proof</span>'; ?>
+            </td>
+            <td>
+                <button class="action-btn viewTaskButton" data-id="<?= $task['id'] ?>">
+                    <i class="fa fa-eye"></i>
+                </button>
+                <?php if (strtolower($task['status']) !== 'completed'): ?>
+                    <button class="action-btn editTaskButton" data-id="<?= $task['id'] ?>">
+                        <i class="fa fa-pencil"></i>
+                    </button>
+                <?php endif; ?>
+                <?php if (strtolower($task['status']) === 'completed'): ?>
+                    <button class="action-btn archiveTaskButton" data-id="<?= $task['id'] ?>">
+                        <i class="fa fa-folder-open"></i>
+                    </button>
+                <?php endif; ?>
+                <button class="action-btn deleteTaskButton" data-id="<?= $task['id'] ?>">
+                    <i class="fa fa-trash"></i>
+                </button>
+                <?php if (!empty($task['proof']) && strtolower($task['status']) !== 'completed'): ?>
+                    <button class="action-btn markCompleteButton" data-id="<?= $task['id'] ?>">
+                        <i class="fa fa-check"></i>
+                    </button>
+                <?php endif; ?>
+            </td>
+        </tr>
+    <?php endwhile; ?>
+</tbody>
                 </table>
             <?php else: ?>
                 <h2 class="no-data"><i class="fa-solid fa-folder-open"></i> No data found</h2>
@@ -311,6 +315,13 @@ include 'db/db_admin-reports.php'; // This now contains all your query logic
             </div>
         </div>
 
+        <!-- Add this modal structure at the end of your body tag -->
+<div id="profileModal" class="modal-overlay">
+    <div class="modal-container0">
+        <span class="close" onclick="closeProfileModal()">&times;</span>
+        <img id="profileModalImage" src="" alt="Profile Picture">
+    </div>
+</div>
     </div>
 
     <script>
@@ -682,6 +693,24 @@ document.getElementById('schoolDropdownFilter').addEventListener('change', funct
     currentUrl.searchParams.set('page', 1); // Reset to the first page
     window.location.href = currentUrl.toString();
 });
+
+// Function to open the profile modal
+function openProfileModal(imageSrc) {
+        document.getElementById('profileModalImage').src = imageSrc;
+        document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    // Function to close the profile modal
+    function closeProfileModal() {
+        document.getElementById('profileModal').style.display = 'none';
+    }
+
+    // Add event listeners to profile images
+    document.querySelectorAll('.profile-image').forEach(img => {
+        img.addEventListener('click', function() {
+            openProfileModal(this.src);
+        });
+    });
     </script>
 </body>
 

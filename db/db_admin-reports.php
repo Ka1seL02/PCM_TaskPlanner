@@ -11,7 +11,7 @@ $search_filter = isset($_GET['search']) ? $_GET['search'] : '';
 $school_filter = isset($_GET['school']) ? $_GET['school'] : 'all';
 
 // Start building the SQL query
-$sql = "SELECT t.*, u.fullname, u.school
+$sql = "SELECT t.*, u.fullname, u.school, u.pfp
         FROM tasks t
         LEFT JOIN users u ON t.assignedto = u.id
         WHERE t.status != 'Archived'";
